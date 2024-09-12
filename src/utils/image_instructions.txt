@@ -1,0 +1,3 @@
+Generate a stylistic, simple illustration that captures the following summary of an article. The image should have a 16:9 ratio and the image must not contain any text whatsoever.
+
+Here's the article summary:
