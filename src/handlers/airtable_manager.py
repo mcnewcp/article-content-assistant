@@ -4,39 +4,59 @@ from airtable import Airtable
 from ..utils.config import (
     AIRTABLE_API_KEY,
     AIRTABLE_BASE_ID,
-    AIRTABLE_TABLE_NAME,
+    AIRTABLE_ARTICLE_TABLE_NAME,
+    AIRTABLE_CONTENT_TABLE_NAME,
 )
 
-airtable = Airtable(AIRTABLE_BASE_ID, AIRTABLE_TABLE_NAME, api_key=AIRTABLE_API_KEY)
 
-
-def save_to_airtable(data):
+def save_to_airtable(data, table: str):
     """
     Save the provided data to Airtable.
     """
     try:
+        if table == "article":
+            table_name = AIRTABLE_ARTICLE_TABLE_NAME
+        elif table == "content":
+            table_name = AIRTABLE_CONTENT_TABLE_NAME
+        else:
+            raise ValueError("Unrecognized table name")
+        airtable = Airtable(AIRTABLE_BASE_ID, table_name, api_key=AIRTABLE_API_KEY)
         record = airtable.insert(data)
         return record["id"]
     except Exception as e:
         return f"Error saving to Airtable: {str(e)}"
 
 
-def get_from_airtable(record_id):
+def get_from_airtable(record_id, table: str):
     """
     Retrieve a record from Airtable by its ID.
     """
     try:
+        if table == "article":
+            table_name = AIRTABLE_ARTICLE_TABLE_NAME
+        elif table == "content":
+            table_name = AIRTABLE_CONTENT_TABLE_NAME
+        else:
+            raise ValueError("Unrecognized table name")
+        airtable = Airtable(AIRTABLE_BASE_ID, table_name, api_key=AIRTABLE_API_KEY)
         record = airtable.get(record_id)
         return record["fields"]
     except Exception as e:
         return f"Error retrieving from Airtable: {str(e)}"
 
 
-def get_latest_record():
+def get_latest_record(table: str):
     """
     Retrieve the latest record from Airtable.
     """
     try:
+        if table == "article":
+            table_name = AIRTABLE_ARTICLE_TABLE_NAME
+        elif table == "content":
+            table_name = AIRTABLE_CONTENT_TABLE_NAME
+        else:
+            raise ValueError("Unrecognized table name")
+        airtable = Airtable(AIRTABLE_BASE_ID, table_name, api_key=AIRTABLE_API_KEY)
         records = airtable.get_all(maxRecords=1, sort=[("datetime", "desc")])
         if records:
             return records[0]["fields"]
@@ -53,17 +73,18 @@ def lambda_handler(event, context):
     try:
         body = json.loads(event["body"])
         action = body["action"]
+        table = body["table"]
 
         if action == "save":
             data = body["data"]
-            result = save_to_airtable(data)
+            result = save_to_airtable(data, table)
             return {"statusCode": 200, "body": json.dumps({"record_id": result})}
         elif action == "get":
             record_id = body["record_id"]
-            result = get_from_airtable(record_id)
+            result = get_from_airtable(record_id, table)
             return {"statusCode": 200, "body": json.dumps(result)}
         elif action == "get_latest":
-            result = get_latest_record()
+            result = get_latest_record(table)
             return {"statusCode": 200, "body": json.dumps(result)}
         else:
             return {"statusCode": 400, "body": json.dumps({"error": "Invalid action"})}

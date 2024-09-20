@@ -19,7 +19,8 @@ IMAGE_GENERATOR_MODEL = "dall-e-3"
 # Airtable configuration
 AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
 AIRTABLE_BASE_ID = os.getenv("AIRTABLE_BASE_ID")
-AIRTABLE_TABLE_NAME = "Articles"
+AIRTABLE_ARTICLE_TABLE_NAME = "Articles"
+AIRTABLE_CONTENT_TABLE_NAME = "Post Content"
 
 # Validate required environment variables
 required_vars = [
