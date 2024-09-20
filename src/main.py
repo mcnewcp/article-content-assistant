@@ -44,7 +44,7 @@ async def process_article(channel, url):
         await channel.send(f"Error processing article: {article_data['error']}")
         return
 
-    await channel.send("Article processed. Generating content...")
+    await channel.send("Article processed.")
 
     # 2. Save article data to Airtable
     airtable_article_record_id = airtable_manager.save_to_airtable(article_data)
