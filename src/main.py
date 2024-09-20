@@ -47,7 +47,9 @@ async def process_article(channel, url):
     await channel.send("Article processed.")
 
     # 2. Save article data to Airtable
-    airtable_article_record_id = airtable_manager.save_to_airtable(article_data)
+    airtable_article_record_id = airtable_manager.save_to_airtable(
+        article_data, "article"
+    )
     await channel.send(
         f"Article data saved to Airtable. Article Record ID: {airtable_article_record_id}"
     )
@@ -70,12 +72,13 @@ async def process_article(channel, url):
     for platform, content in generated_content.items():
         airtable_content_record_id = airtable_manager.save_to_airtable(
             {
-                "article_id": 1,
+                "article_record_id": airtable_article_record_id,
                 "platform": platform,
                 "content": content,
                 "image_url": image_url,
                 "posted": "N",
-            }
+            },
+            "content",
         )
         await channel.send(
             f"Content saved to Airtable.  Content Record ID: {airtable_content_record_id}"
