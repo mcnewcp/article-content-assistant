@@ -66,6 +66,21 @@ async def process_article(channel, url):
     image_url = image_generator.generate_image(article_data.get("summary", ""))
     await channel.send(f"Generated image: {image_url}")
 
+    # 6. Save social media content to airtable
+    for platform, content in generated_content.items():
+        airtable_content_record_id = airtable_manager.save_to_airtable(
+            {
+                "article_id": 1,
+                "platform": platform,
+                "content": content,
+                "image_url": image_url,
+                "posted": "N",
+            }
+        )
+        await channel.send(
+            f"Content saved to Airtable.  Content Record ID: {airtable_content_record_id}"
+        )
+
     # 5. Inform user that content is ready for review
     await channel.send("Content generated and saved. You can review it in Airtable.")
 
