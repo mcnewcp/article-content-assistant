@@ -22,6 +22,13 @@ AIRTABLE_BASE_ID = os.getenv("AIRTABLE_BASE_ID")
 AIRTABLE_ARTICLE_TABLE_NAME = "Articles"
 AIRTABLE_CONTENT_TABLE_NAME = "Post Content"
 
+# X (Twitter) configuration
+TWITTER_API_KEY = os.getenv("TWITTER_API_KEY")
+TWITTER_API_SECRET = os.getenv("TWITTER_API_SECRET")
+TWITTER_ACCESS_TOKEN = os.getenv("TWITTER_ACCESS_TOKEN")
+TWITTER_ACCESS_TOKEN_SECRET = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
+TWITTER_BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN")
+
 # Validate required environment variables
 required_vars = [
     "DISCORD_TOKEN",
@@ -29,6 +36,11 @@ required_vars = [
     "OPENAI_API_KEY",
     "AIRTABLE_API_KEY",
     "AIRTABLE_BASE_ID",
+    "TWITTER_API_KEY",
+    "TWITTER_API_SECRET",
+    "TWITTER_ACCESS_TOKEN",
+    "TWITTER_ACCESS_TOKEN_SECRET",
+    "TWITTER_BEARER_TOKEN",
 ]
 
 for var in required_vars:

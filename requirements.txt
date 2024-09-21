@@ -5,3 +5,4 @@ airtable-python-wrapper==0.15.3
 pillow==10.1.0
 python-dotenv==1.0.0
 beautifulsoup4==4.12.2
+tweepy==4.14.0
