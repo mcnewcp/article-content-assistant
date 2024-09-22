@@ -65,7 +65,7 @@ IMAGE_INSTRUCTIONS = get_instructions("image_instructions.txt")
 GEN_PARAMS = {
     "X": {
         "temperature": 1,
-        "max_tokens": 86,
+        "max_tokens": 85,
         "top_p": 1,
         "frequency_penalty": 0,
         "presence_penalty": 0,
