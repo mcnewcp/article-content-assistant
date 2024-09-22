@@ -60,3 +60,14 @@ def get_instructions(filename):
 PROCESSOR_INSTRUCTIONS = get_instructions("processor_instructions.txt")
 CONTENT_INSTRUCTIONS_X = get_instructions("content_instructions_x.txt")
 IMAGE_INSTRUCTIONS = get_instructions("image_instructions.txt")
+
+# Social media generation params
+GEN_PARAMS = {
+    "X": {
+        "temperature": 1,
+        "max_tokens": 86,
+        "top_p": 1,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+    }
+}
