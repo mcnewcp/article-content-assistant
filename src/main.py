@@ -1,12 +1,12 @@
 import discord
 from discord.ext import commands
-import json
 
 from .handlers import (
     article_processor,
     content_generator,
     image_generator,
     airtable_manager,
+    social_media_poster,
 )
 from .utils.config import DISCORD_TOKEN, CHANNEL_ID
 
@@ -84,8 +84,39 @@ async def process_article(channel, url):
             f"Content saved to Airtable.  Content Record ID: {airtable_content_record_id}"
         )
 
-    # 5. Inform user that content is ready for review
-    await channel.send("Content generated and saved. You can review it in Airtable.")
+    # 7. Inform user that content is ready for review
+    await channel.send(
+        "Content generated and ready to post.\nYou can post to twitter with the command `!post_twitter <Content Record ID>`"
+    )
+
+
+@bot.command(name="post_twitter")
+async def post_twitter(ctx, content_id: str):
+    """
+    Post content to Twitter using the given Airtable content record ID.
+    Usage: !post_twitter <content_id>
+    """
+
+    # Fetch content from Airtable
+    content_data = airtable_manager.get_content_by_id(content_id)
+
+    if not content_data:
+        await ctx.send(f"Content with ID {content_id} not found in Airtable.")
+        return
+
+    # Post to Twitter
+    result = social_media_poster.post_to_twitter(
+        content_data["content"], content_data.get("image_url")
+    )
+
+    if "Error" in result:
+        await ctx.send(f"Failed to post to Twitter: {result}")
+    else:
+        await ctx.send(f"Successfully posted to Twitter: {result}")
+
+        # Update Airtable to mark content as posted
+        update_result = airtable_manager.update_content_status(content_id, "Y")
+        await ctx.send(f"Airtable record {content_id} updated as posted.")
 
 
 if __name__ == "__main__":
