@@ -86,7 +86,7 @@ async def process_article(channel, url):
 
     # 7. Inform user that content is ready for review
     await channel.send(
-        "Content generated and ready to post.\nYou can post to twitter with the command `!post_twitter <Content Record ID>`"
+        f"Content generated and ready to post.\nYou can post to twitter with the command `!post_twitter {airtable_content_record_id}`"
     )
 
 
