@@ -99,6 +99,10 @@ async def post_twitter(ctx, content_id: str):
 
     # Fetch content from Airtable
     content_data = airtable_manager.get_content_by_id(content_id)
+    article_data = airtable_manager.get_from_airtable(
+        content_data.get("article_record_id"), "article"
+    )
+    article_url = article_data.get("url")
 
     if not content_data:
         await ctx.send(f"Content with ID {content_id} not found in Airtable.")
@@ -106,7 +110,7 @@ async def post_twitter(ctx, content_id: str):
 
     # Post to Twitter
     result = social_media_poster.post_to_twitter(
-        content_data["content"], content_data.get("image_url")
+        content_data["content"] + "\n" + article_url, content_data.get("image_url")
     )
 
     if "Error" in result:
