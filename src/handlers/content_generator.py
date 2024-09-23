@@ -5,6 +5,7 @@ from ..utils.config import (
     OPENAI_API_KEY,
     CONTENT_GENERATOR_MODEL,
     CONTENT_INSTRUCTIONS_X,
+    GEN_PARAMS,
 )
 
 # Initialize the OpenAI client
@@ -18,6 +19,7 @@ def generate_content(article_text, platform):
     try:
         if platform == "X":
             system_prompt = CONTENT_INSTRUCTIONS_X
+            content_gen_params = GEN_PARAMS.get(platform)
         else:
             raise ValueError(f"Unsupported platform: {platform}")
 
@@ -30,6 +32,7 @@ def generate_content(article_text, platform):
                     "content": f"Please generate social media content from the following article.\n\n{article_text}",
                 },
             ],
+            **content_gen_params,
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
