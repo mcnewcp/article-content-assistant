@@ -58,7 +58,10 @@ def get_instructions(filename):
 
 # Load system prompts
 PROCESSOR_INSTRUCTIONS = get_instructions("processor_instructions.txt")
+# if a platform's instructions are updated, the corresponding version number must be increased
+# otherwise the updated instructions will not be used
 CONTENT_INSTRUCTIONS_X = get_instructions("content_instructions_x.txt")
+VERSION_X = 1
 IMAGE_INSTRUCTIONS = get_instructions("image_instructions.txt")
 
 # Social media generation params
