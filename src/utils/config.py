@@ -67,12 +67,7 @@ CONTENT_ASSISTANT_CONFIGS = {
     "X": {
         "version": 1,
         "instructions": get_instructions("content_instructions_x.txt"),
-        "gen_params": {
-            "temperature": 1,
-            "max_tokens": 85,
-            "top_p": 1,
-            "frequency_penalty": 0,
-            "presence_penalty": 0,
-        },
-    }
+        "temperature": 1,
+        "top_p": 1,
+    },
 }
