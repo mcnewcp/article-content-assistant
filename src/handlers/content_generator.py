@@ -8,11 +8,43 @@ from ..utils.config import (
     GEN_PARAMS,
 )
 
+from typing import Optional
+
 # Initialize the OpenAI client
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 
+def load_or_create_assistant(assistant_name: str, platform: str):
+    """
+    Load or create an assistant given the assistant name.  Use the instructions for the relevant platform.
+    """
+    # TODO: this function should formulate the assistant name and load or create
+    return
+
+
+def get_new_thread_id():
+    """
+    Create a new thread and return the thread id.
+    """
+    return
+
+
+def get_n_chr(text: str):
+    """
+    Count and return the number of characters in a string.
+    """
+    return
+
+
+def shorten_content():
+    """
+    Shorten the content on the given thread and return the new content.
+    """
+    return
+
+
 def generate_content(article_text, platform):
+    # TODO: alter to work with assistants
     """
     Generate social media content based on the article text and platform.
     """
@@ -52,6 +84,13 @@ def lambda_handler(event, context):
         return {"statusCode": 200, "body": json.dumps({"generated_content": result})}
     except Exception as e:
         return {"statusCode": 400, "body": json.dumps({"error": str(e)})}
+
+
+def regenerate_content(thread_id: str, user_message: Optional[str] = None):
+    """
+    Regenerate content associated with a given thread.  Optionally, add a user message to the prompt.
+    """
+    return
 
 
 # For local testing
