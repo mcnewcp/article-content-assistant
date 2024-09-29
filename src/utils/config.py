@@ -61,8 +61,9 @@ PROCESSOR_INSTRUCTIONS = get_instructions("processor_instructions.txt")
 IMAGE_INSTRUCTIONS = get_instructions("image_instructions.txt")
 
 # load content assistant configs
-# if a platform's instructions are updated, the corresponding version number must be increased
-# otherwise the updated instructions will not be used
+# if a platform's instructions, gen params, or model are updated,
+# the corresponding version number must be increased
+# otherwise the previous assistant will be loaded
 CONTENT_ASSISTANT_CONFIGS = {
     "X": {
         "version": 1,
