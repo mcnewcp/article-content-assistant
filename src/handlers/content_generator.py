@@ -4,8 +4,7 @@ from openai import OpenAI
 from ..utils.config import (
     OPENAI_API_KEY,
     CONTENT_GENERATOR_MODEL,
-    CONTENT_INSTRUCTIONS_X,
-    GEN_PARAMS,
+    CONTENT_ASSISTANT_CONFIGS,
 )
 
 from typing import Optional
@@ -14,19 +13,34 @@ from typing import Optional
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 
-def load_or_create_assistant(assistant_name: str, platform: str):
+def _load_or_create_assistant(platform: str):
     """
-    Load or create an assistant given the assistant name.  Use the instructions for the relevant platform.
+    Load or create an assistant given the platform.
+    Use the config for the relevant platform.
+    Return the assistant id.
     """
-    # TODO: this function should formulate the assistant name and load or create
-    return
+    platform_config = CONTENT_ASSISTANT_CONFIGS.get(platform)
+    assistant_name = f'{platform}-{platform_config.get("version")}'
 
+    try:
+        for asst in client.beta.assistants.list():
+            if assistant_name == asst.name:
+                # assistant found
+                print(f"assistant {assistant_name} found")
+                return asst.id
 
-def get_new_thread_id():
-    """
-    Create a new thread and return the thread id.
-    """
-    return
+        print(f"assistant {assistant_name} not found, attempting to create")
+        asst = client.beta.assistants.create(
+            model=CONTENT_GENERATOR_MODEL,
+            instructions=platform_config.get("instructions"),
+            name=assistant_name,
+            temperature=platform_config.get("temperature"),
+            top_p=platform_config.get("top_p"),
+        )
+        print(f"assistant {assistant_name} created")
+        return asst.id
+    except Exception as e:
+        return f"Error getting or creating assistant: {str(e)}"
 
 
 def get_n_chr(text: str):
@@ -44,29 +58,37 @@ def shorten_content():
 
 
 def generate_content(article_text, platform):
-    # TODO: alter to work with assistants
     """
     Generate social media content based on the article text and platform.
     """
     try:
-        if platform == "X":
-            system_prompt = CONTENT_INSTRUCTIONS_X
-            content_gen_params = GEN_PARAMS.get(platform)
-        else:
+        # check platform
+        if platform not in CONTENT_ASSISTANT_CONFIGS:
             raise ValueError(f"Unsupported platform: {platform}")
 
-        response = client.chat.completions.create(
-            model=CONTENT_GENERATOR_MODEL,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {
-                    "role": "user",
-                    "content": f"Please generate social media content from the following article.\n\n{article_text}",
-                },
-            ],
-            **content_gen_params,
+        # get assistant
+        assistant_id = _load_or_create_assistant(platform)
+
+        # setup thread
+        thread_id = client.beta.threads.create().id
+        message = client.beta.threads.messages.create(
+            thread_id,
+            content=f"Please generate social media content from the following article.\n\n{article_text}",
+            role="user",
         )
-        return response.choices[0].message.content.strip()
+
+        # get result
+        run_result = client.beta.threads.runs.create_and_poll(
+            thread_id=thread_id, assistant_id=assistant_id, poll_interval_ms=2000
+        )
+        content_response = client.beta.threads.messages.list(
+            thread_id, limit=1, order="desc"
+        )
+        return {
+            "content": content_response.data[0].content[0].text.value,
+            "thread_id": thread_id,
+        }
+
     except Exception as e:
         return f"Error generating content: {str(e)}"
 
