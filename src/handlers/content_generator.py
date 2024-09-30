@@ -79,7 +79,9 @@ def generate_content(article_text: str, platform: str):
         return f"Error generating content: {str(e)}"
 
 
-def shorten_content(thread_id: str, platform: str):
+def shorten_content(
+    thread_id: str, platform: str, max_n_char: int = 280, max_tries: int = 5
+):
     """
     Shorten the content on the given thread and return the new content.
     """
@@ -88,23 +90,44 @@ def shorten_content(thread_id: str, platform: str):
         if platform not in CONTENT_ASSISTANT_CONFIGS:
             raise ValueError(f"Unsupported platform: {platform}")
 
-        # get assistant
+        # retrieve assistant, content
         assistant_id = _load_or_create_assistant(platform)
-
-        # request shortened content
-        message = client.beta.threads.messages.create(
-            thread_id,
-            content=f"Please shorten the content generated in the previous message, while keeping as much of the original content and intent as possible.",
-            role="user",
-        )
-        run_result = client.beta.threads.runs.create_and_poll(
-            thread_id=thread_id, assistant_id=assistant_id, poll_interval_ms=2000
-        )
-        content_response = client.beta.threads.messages.list(
-            thread_id, limit=1, order="desc"
+        content = (
+            client.beta.threads.messages.list(thread_id, limit=1, order="desc")
+            .data[0]
+            .content[0]
+            .text.value
         )
 
-        return content_response.data[0].content[0].text.value
+        # shorten content
+        tries = 0
+        while len(content) > max_n_char and tries < max_tries:
+            print(f"Shortening content, try {tries}.")
+            print(f"Current character count: {len(content)}")
+            tries += 1
+            message = client.beta.threads.messages.create(
+                thread_id,
+                content=f"Please shorten the content generated in the previous message, while keeping as much of the original content and intent as possible.",
+                role="user",
+            )
+            run_result = client.beta.threads.runs.create_and_poll(
+                thread_id=thread_id, assistant_id=assistant_id, poll_interval_ms=2000
+            )
+
+            # update content
+            content_response = client.beta.threads.messages.list(
+                thread_id, limit=1, order="desc"
+            )
+            content = content_response.data[0].content[0].text.value
+            print(f"Shortened character count: {len(content)}")
+
+        # return error after max tries
+        if len(content) > max_n_char:
+            raise ValueError(
+                f"Failed shorten content to {max_n_char} characters in {max_tries} tries."
+            )
+
+        return content
 
     except Exception as e:
         return f"Error shortening content: {str(e)}"
