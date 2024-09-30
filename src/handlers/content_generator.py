@@ -71,7 +71,7 @@ def generate_content(article_text: str, platform: str):
             thread_id, limit=1, order="desc"
         )
         return {
-            "content": content_response.data[0].content[0].text.value,
+            "text": content_response.data[0].content[0].text.value,
             "thread_id": thread_id,
         }
 

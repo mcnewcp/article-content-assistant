@@ -63,8 +63,17 @@ async def process_article(channel, url):
         content = content_generator.generate_content(
             article_data.get("text", ""), platform
         )
+
+        # if a tweet is too long, regenerate
+        max_tweet_n_char = 280 - 23
+        if platform == "X" and len(content.get("text")) > max_tweet_n_char:
+            await channel.send("Shortening tweet.")
+            content["text"] = content_generator.shorten_content(
+                content.get("thread_id"), platform, max_n_char=max_tweet_n_char
+            )
+
         generated_content[platform] = content
-        await channel.send(f"Generated content for {platform}:\n{content}")
+        await channel.send(f"Generated content for {platform}:\n{content.get('text')}")
 
     # 4. Generate image
     image_url = image_generator.generate_image(article_data.get("summary", ""))
@@ -76,7 +85,8 @@ async def process_article(channel, url):
             {
                 "article_record_id": airtable_article_record_id,
                 "platform": platform,
-                "content": content,
+                "content": content.get("text"),
+                "thread_id": content.get("thread_id"),
                 "image_url": image_url,
                 "posted": "N",
             },
