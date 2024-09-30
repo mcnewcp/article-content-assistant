@@ -56,18 +56,19 @@ def get_instructions(filename):
         return file.read()
 
 
-# Load system prompts
+# Load instructions
 PROCESSOR_INSTRUCTIONS = get_instructions("processor_instructions.txt")
-CONTENT_INSTRUCTIONS_X = get_instructions("content_instructions_x.txt")
 IMAGE_INSTRUCTIONS = get_instructions("image_instructions.txt")
 
-# Social media generation params
-GEN_PARAMS = {
+# load content assistant configs
+# if a platform's instructions, gen params, or model are updated,
+# the corresponding version number must be increased
+# otherwise the previous assistant will be loaded
+CONTENT_ASSISTANT_CONFIGS = {
     "X": {
+        "version": 1,
+        "instructions": get_instructions("content_instructions_x.txt"),
         "temperature": 1,
-        "max_tokens": 85,
         "top_p": 1,
-        "frequency_penalty": 0,
-        "presence_penalty": 0,
-    }
+    },
 }

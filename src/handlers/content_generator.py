@@ -4,39 +4,133 @@ from openai import OpenAI
 from ..utils.config import (
     OPENAI_API_KEY,
     CONTENT_GENERATOR_MODEL,
-    CONTENT_INSTRUCTIONS_X,
-    GEN_PARAMS,
+    CONTENT_ASSISTANT_CONFIGS,
 )
+
+from typing import Optional
 
 # Initialize the OpenAI client
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 
-def generate_content(article_text, platform):
+def _load_or_create_assistant(platform: str):
+    """
+    Load or create an assistant given the platform.
+    Use the config for the relevant platform.
+    Return the assistant id.
+    """
+    platform_config = CONTENT_ASSISTANT_CONFIGS.get(platform)
+    assistant_name = f'{platform}-{platform_config.get("version")}'
+
+    try:
+        for asst in client.beta.assistants.list():
+            if assistant_name == asst.name:
+                # assistant found
+                print(f"assistant {assistant_name} found")
+                return asst.id
+
+        print(f"assistant {assistant_name} not found, attempting to create")
+        asst = client.beta.assistants.create(
+            model=CONTENT_GENERATOR_MODEL,
+            instructions=platform_config.get("instructions"),
+            name=assistant_name,
+            temperature=platform_config.get("temperature"),
+            top_p=platform_config.get("top_p"),
+        )
+        print(f"assistant {assistant_name} created")
+        return asst.id
+    except Exception as e:
+        return f"Error getting or creating assistant: {str(e)}"
+
+
+def generate_content(article_text: str, platform: str):
     """
     Generate social media content based on the article text and platform.
     """
     try:
-        if platform == "X":
-            system_prompt = CONTENT_INSTRUCTIONS_X
-            content_gen_params = GEN_PARAMS.get(platform)
-        else:
+        # check platform
+        if platform not in CONTENT_ASSISTANT_CONFIGS:
             raise ValueError(f"Unsupported platform: {platform}")
 
-        response = client.chat.completions.create(
-            model=CONTENT_GENERATOR_MODEL,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {
-                    "role": "user",
-                    "content": f"Please generate social media content from the following article.\n\n{article_text}",
-                },
-            ],
-            **content_gen_params,
+        # get assistant
+        assistant_id = _load_or_create_assistant(platform)
+
+        # setup thread
+        thread_id = client.beta.threads.create().id
+        message = client.beta.threads.messages.create(
+            thread_id,
+            content=f"Please generate social media content from the following article.\n\n{article_text}",
+            role="user",
         )
-        return response.choices[0].message.content.strip()
+
+        # get result
+        run_result = client.beta.threads.runs.create_and_poll(
+            thread_id=thread_id, assistant_id=assistant_id, poll_interval_ms=2000
+        )
+        content_response = client.beta.threads.messages.list(
+            thread_id, limit=1, order="desc"
+        )
+        return {
+            "content": content_response.data[0].content[0].text.value,
+            "thread_id": thread_id,
+        }
+
     except Exception as e:
         return f"Error generating content: {str(e)}"
+
+
+def shorten_content(
+    thread_id: str, platform: str, max_n_char: int = 280, max_tries: int = 5
+):
+    """
+    Shorten the content on the given thread and return the new content.
+    """
+    try:
+        # check platform
+        if platform not in CONTENT_ASSISTANT_CONFIGS:
+            raise ValueError(f"Unsupported platform: {platform}")
+
+        # retrieve assistant, content
+        assistant_id = _load_or_create_assistant(platform)
+        content = (
+            client.beta.threads.messages.list(thread_id, limit=1, order="desc")
+            .data[0]
+            .content[0]
+            .text.value
+        )
+
+        # shorten content
+        tries = 0
+        while len(content) > max_n_char and tries < max_tries:
+            print(f"Shortening content, try {tries}.")
+            print(f"Current character count: {len(content)}")
+            tries += 1
+            message = client.beta.threads.messages.create(
+                thread_id,
+                content=f"Please shorten the content generated in the previous message, while keeping as much of the original content and intent as possible.",
+                role="user",
+            )
+            run_result = client.beta.threads.runs.create_and_poll(
+                thread_id=thread_id, assistant_id=assistant_id, poll_interval_ms=2000
+            )
+
+            # update content
+            content_response = client.beta.threads.messages.list(
+                thread_id, limit=1, order="desc"
+            )
+            content = content_response.data[0].content[0].text.value
+            print(f"Shortened character count: {len(content)}")
+
+        # return error after max tries
+        if len(content) > max_n_char:
+            raise ValueError(
+                f"Failed shorten content to {max_n_char} characters in {max_tries} tries."
+            )
+
+        return content
+
+    except Exception as e:
+        return f"Error shortening content: {str(e)}"
 
 
 def lambda_handler(event, context):
@@ -52,6 +146,13 @@ def lambda_handler(event, context):
         return {"statusCode": 200, "body": json.dumps({"generated_content": result})}
     except Exception as e:
         return {"statusCode": 400, "body": json.dumps({"error": str(e)})}
+
+
+def regenerate_content(thread_id: str, user_message: Optional[str] = None):
+    """
+    Regenerate content associated with a given thread.  Optionally, add a user message to the prompt.
+    """
+    return
 
 
 # For local testing

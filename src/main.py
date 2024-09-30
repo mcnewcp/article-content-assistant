@@ -10,6 +10,8 @@ from .handlers import (
 )
 from .utils.config import DISCORD_TOKEN, CHANNEL_ID
 
+from typing import Optional
+
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -121,6 +123,15 @@ async def post_twitter(ctx, content_id: str):
         # Update Airtable to mark content as posted
         update_result = airtable_manager.update_content_status(content_id, "Y")
         await ctx.send(f"Airtable record {content_id} updated as posted.")
+
+
+@bot.command(name="regenerate_content")
+async def regenerate_content(ctx, content_id: str, user_message: Optional[str] = None):
+    """
+    Regenerate content for given content_id.  Optionally include user message in prompt.
+    Usage: !regenerate_content
+    """
+    return
 
 
 if __name__ == "__main__":
