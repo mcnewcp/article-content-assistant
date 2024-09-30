@@ -43,21 +43,7 @@ def _load_or_create_assistant(platform: str):
         return f"Error getting or creating assistant: {str(e)}"
 
 
-def get_n_chr(text: str):
-    """
-    Count and return the number of characters in a string.
-    """
-    return
-
-
-def shorten_content():
-    """
-    Shorten the content on the given thread and return the new content.
-    """
-    return
-
-
-def generate_content(article_text, platform):
+def generate_content(article_text: str, platform: str):
     """
     Generate social media content based on the article text and platform.
     """
@@ -91,6 +77,37 @@ def generate_content(article_text, platform):
 
     except Exception as e:
         return f"Error generating content: {str(e)}"
+
+
+def shorten_content(thread_id: str, platform: str):
+    """
+    Shorten the content on the given thread and return the new content.
+    """
+    try:
+        # check platform
+        if platform not in CONTENT_ASSISTANT_CONFIGS:
+            raise ValueError(f"Unsupported platform: {platform}")
+
+        # get assistant
+        assistant_id = _load_or_create_assistant(platform)
+
+        # request shortened content
+        message = client.beta.threads.messages.create(
+            thread_id,
+            content=f"Please shorten the content generated in the previous message, while keeping as much of the original content and intent as possible.",
+            role="user",
+        )
+        run_result = client.beta.threads.runs.create_and_poll(
+            thread_id=thread_id, assistant_id=assistant_id, poll_interval_ms=2000
+        )
+        content_response = client.beta.threads.messages.list(
+            thread_id, limit=1, order="desc"
+        )
+
+        return content_response.data[0].content[0].text.value
+
+    except Exception as e:
+        return f"Error shortening content: {str(e)}"
 
 
 def lambda_handler(event, context):
